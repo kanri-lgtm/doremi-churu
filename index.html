@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐱 ドレミのチュール管理</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+  background: #fef9f0;
+  color: #333;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ヘッダー */
+header {
+  text-align: center;
+  padding: 20px 0 10px;
+}
+
+header h1 {
+  font-size: 24px;
+  color: #e8836b;
+}
+
+header .cat-face {
+  font-size: 48px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+header .subtitle {
+  font-size: 13px;
+  color: #999;
+}
+
+/* アラートバナー */
+.alert-banner {
+  display: none;
+  background: #ff4757;
+  color: white;
+  text-align: center;
+  padding: 14px;
+  border-radius: 12px;
+  margin: 12px 0;
+  font-size: 18px;
+  font-weight: bold;
+  animation: pulse 2s infinite;
+}
+
+.alert-banner.show { display: block; }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+/* 今日のステータス */
+.status-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 12px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  text-align: center;
+}
+
+.status-card .date {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.churu-meter {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.churu-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: all 0.3s;
+}
+
+.churu-icon.eaten {
+  background: #ff6b81;
+  color: white;
+}
+
+.churu-icon.empty {
+  background: #f1f1f1;
+  color: #ccc;
+}
+
+.status-text {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* あげるフォーム */
+.feed-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 12px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.feed-card h2 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: #e8836b;
+}
+
+.field { margin-bottom: 16px; }
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+/* 家族ボタン */
+.person-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.person-btn {
+  padding: 10px 4px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.person-btn:hover { border-color: #e8836b; }
+
+.person-btn.selected {
+  border-color: #e8836b;
+  background: #fff5f3;
+  color: #e8836b;
+  font-weight: bold;
+}
+
+.person-btn .icon { font-size: 22px; display: block; margin-bottom: 2px; }
+
+/* 味セレクト */
+select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 15px;
+  background: white;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+select:focus { outline: none; border-color: #e8836b; }
+
+/* あげるボタン */
+.feed-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #e8836b, #f5a623);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.feed-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.feed-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 履歴 */
+.history-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 12px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.history-card h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #e8836b;
+}
+
+.record-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+  gap: 10px;
+}
+
+.record-item:last-child { border-bottom: none; }
+
+.record-time {
+  font-size: 13px;
+  color: #999;
+  min-width: 44px;
+}
+
+.record-person {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 32px;
+}
+
+.record-flavor {
+  font-size: 14px;
+  flex: 1;
+}
+
+.record-delete {
+  background: none;
+  border: none;
+  color: #ccc;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.record-delete:hover { color: #ff4757; background: #fff0f0; }
+
+.no-records {
+  text-align: center;
+  color: #ccc;
+  padding: 20px;
+  font-size: 14px;
+}
+
+/* タブ */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: #f5f5f5;
+  color: #999;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  background: #e8836b;
+  color: white;
+  font-weight: 600;
+}
+
+/* トースト通知 */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: #333;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: transform 0.3s;
+  z-index: 100;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="cat-face">🐱</div>
+    <h1>ドレミのチュール管理</h1>
+    <div class="subtitle">♀ みんなであげすぎ防止！</div>
+  </header>
+
+  <div class="alert-banner" id="alertBanner">
+    🚫 もうあげないで！（今日は上限に達しました）
+  </div>
+
+  <div class="status-card">
+    <div class="date" id="todayDate"></div>
+    <div class="churu-meter" id="churuMeter"></div>
+    <div class="status-text" id="statusText"></div>
+  </div>
+
+  <div class="feed-card" id="feedCard">
+    <h2>🍬 チュールをあげる</h2>
+
+    <div class="field">
+      <label>だれがあげる？</label>
+      <div class="person-buttons" id="personButtons">
+        <button class="person-btn" data-person="父"><span class="icon">👨</span>父</button>
+        <button class="person-btn" data-person="母"><span class="icon">👩</span>母</button>
+        <button class="person-btn" data-person="兄"><span class="icon">👦</span>兄</button>
+        <button class="person-btn" data-person="妹"><span class="icon">👧</span>妹</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>どの味？</label>
+      <select id="flavorSelect">
+        <option value="">味を選んでください</option>
+        <optgroup label="定番">
+          <option value="まぐろ">まぐろ</option>
+          <option value="かつお">かつお</option>
+          <option value="とりささみ">とりささみ</option>
+          <option value="ほたて貝柱">ほたて貝柱</option>
+        </optgroup>
+        <optgroup label="組み合わせ">
+          <option value="まぐろ＆ほたて貝柱">まぐろ＆ほたて貝柱</option>
+          <option value="まぐろ＆まぐろ節">まぐろ＆まぐろ節</option>
+          <option value="まぐろ＆贅沢サーモン">まぐろ＆贅沢サーモン</option>
+          <option value="まぐろ＆タラバガニ">まぐろ＆タラバガニ</option>
+          <option value="まぐろ＆贅沢ロブスター">まぐろ＆贅沢ロブスター</option>
+          <option value="まぐろ＆贅沢本まぐろ">まぐろ＆贅沢本まぐろ</option>
+          <option value="まぐろ＆国産真鯛">まぐろ＆国産真鯛</option>
+          <option value="いわし＆まぐろ">いわし＆まぐろ</option>
+          <option value="かつお＆国産あごだし">かつお＆国産あごだし</option>
+          <option value="かつお＆本格かつお節">かつお＆本格かつお節</option>
+          <option value="宗田かつお＆かつお節">宗田かつお＆かつお節</option>
+          <option value="とりささみ＆甘えび">とりささみ＆甘えび</option>
+          <option value="とりささみ＆いか">とりささみ＆いか</option>
+          <option value="とりささみ＆日本海産かに">とりささみ＆日本海産かに</option>
+          <option value="とりささみ＆黒毛和牛">とりささみ＆黒毛和牛</option>
+          <option value="とりささみ＆名古屋コーチン">とりささみ＆名古屋コーチン</option>
+          <option value="サーモン＆とりささみ">サーモン＆とりささみ</option>
+          <option value="贅沢本まぐろ＆キングサーモン">贅沢本まぐろ＆キングサーモン</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <button class="feed-btn" id="feedBtn" disabled>チュールをあげる 🐾</button>
+  </div>
+
+  <div class="history-card">
+    <h2>📋 きょうの記録</h2>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="today">きょう</button>
+      <button class="tab-btn" data-tab="all">すべて</button>
+    </div>
+    <div id="recordsList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let selectedPerson = null;
+let currentTab = 'today';
+
+// 初期化
+document.addEventListener('DOMContentLoaded', () => {
+  setTodayDate();
+  loadRecords();
+  setupEvents();
+});
+
+function setTodayDate() {
+  const d = new Date();
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('todayDate').textContent =
+    `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+}
+
+function setupEvents() {
+  // 家族ボタン
+  document.querySelectorAll('.person-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.person-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedPerson = btn.dataset.person;
+      checkReady();
+    });
+  });
+
+  // 味セレクト
+  document.getElementById('flavorSelect').addEventListener('change', checkReady);
+
+  // あげるボタン
+  document.getElementById('feedBtn').addEventListener('click', feedChuru);
+
+  // タブ
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTab = btn.dataset.tab;
+      loadRecords();
+    });
+  });
+}
+
+function checkReady() {
+  const flavor = document.getElementById('flavorSelect').value;
+  document.getElementById('feedBtn').disabled = !(selectedPerson && flavor);
+}
+
+async function loadRecords() {
+  const endpoint = currentTab === 'today' ? '/api/records' : '/api/history';
+  const res = await fetch(endpoint);
+  const data = await res.json();
+
+  const records = currentTab === 'today' ? data.today_records : data.records;
+  const todayRes = currentTab === 'today' ? data : await (await fetch('/api/records')).json();
+
+  updateMeter(todayRes.today_count, todayRes.limit);
+  updateAlert(todayRes.over_limit);
+  renderRecords(records);
+}
+
+function updateMeter(count, limit) {
+  const meter = document.getElementById('churuMeter');
+  meter.innerHTML = '';
+  for (let i = 0; i < limit; i++) {
+    const div = document.createElement('div');
+    div.className = `churu-icon ${i < count ? 'eaten' : 'empty'}`;
+    div.textContent = i < count ? '🍬' : '○';
+    meter.appendChild(div);
+  }
+  document.getElementById('statusText').textContent =
+    count >= limit ? `${count}/${limit}本 — 今日はもう十分です！` : `${count}/${limit}本`;
+
+  // あげるカードの表示切替
+  const feedCard = document.getElementById('feedCard');
+  feedCard.style.opacity = count >= limit ? '0.5' : '1';
+  feedCard.style.pointerEvents = count >= limit ? 'none' : 'auto';
+}
+
+function updateAlert(overLimit) {
+  document.getElementById('alertBanner').classList.toggle('show', overLimit);
+}
+
+function renderRecords(records) {
+  const list = document.getElementById('recordsList');
+  if (!records.length) {
+    list.innerHTML = '<div class="no-records">まだ記録がありません 🐱</div>';
+    return;
+  }
+
+  const personIcons = { '父': '👨', '母': '👩', '兄': '👦', '妹': '👧' };
+
+  // 新しい順に表示
+  const sorted = [...records].reverse();
+  list.innerHTML = sorted.map(r => `
+    <div class="record-item">
+      <span class="record-time">${r.time}</span>
+      <span class="record-person">${personIcons[r.person] || ''} ${r.person}</span>
+      <span class="record-flavor">${r.flavor}</span>
+      <button class="record-delete" onclick="deleteRecord(${r.id})" title="取り消す">×</button>
+    </div>
+  `).join('');
+}
+
+async function feedChuru() {
+  const flavor = document.getElementById('flavorSelect').value;
+  if (!selectedPerson || !flavor) return;
+
+  const res = await fetch('/api/feed', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ person: selectedPerson, flavor })
+  });
+  const data = await res.json();
+
+  if (data.ok) {
+    showToast(`${selectedPerson}が「${flavor}」をあげました！`);
+    // リセット
+    document.querySelectorAll('.person-btn').forEach(b => b.classList.remove('selected'));
+    selectedPerson = null;
+    document.getElementById('flavorSelect').value = '';
+    document.getElementById('feedBtn').disabled = true;
+    loadRecords();
+  } else {
+    showToast(data.message || 'エラーが発生しました');
+  }
+}
+
+async function deleteRecord(id) {
+  if (!confirm('この記録を取り消しますか？')) return;
+  await fetch('/api/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  });
+  showToast('記録を取り消しました');
+  loadRecords();
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>

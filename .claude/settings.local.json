@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:www.inaba-petfood.co.jp)",
+      "WebFetch(domain:rurimaneko.com)",
+      "Read(//Users/kato/.nvm/versions/**)",
+      "Bash(brew list:*)",
+      "Bash(git --version)",
+      "Bash(gh --version)",
+      "Bash(gh auth:*)",
+      "Bash(brew install:*)"
+    ]
+  }
+}
